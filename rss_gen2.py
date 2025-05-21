@@ -21,13 +21,19 @@ def fetch_dolar_item():
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
             pubdate = item.findtext("pubdate", "").strip()
-            print(f"Raw pubdate: '{pubdate}'")   # DEBUG
+            # Debug prints to check what values are being fetched from the feed
+            print("DEBUG: Found DOLAR item")
+            print(f"DEBUG: title: '{title}'")
+            print(f"DEBUG: description: '{description}'")
+            print(f"DEBUG: valuedate: '{valuedate}'")
+            print(f"DEBUG: pubdate: '{pubdate}'")
             return {
                 "title": title,
                 "description": description,
                 "valuedate": valuedate,
                 "pubdate": pubdate
             }
+    print("DEBUG: DOLAR item not found!")
     return None
 
 def iso8601_to_rfc822(dt_str):
@@ -38,9 +44,10 @@ def iso8601_to_rfc822(dt_str):
     dt_str_fixed = re.sub(r'([+-]\d{2}):(\d{2})$', r'\1\2', dt_str)
     try:
         dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S%z")
+        print(f"DEBUG: Converted '{dt_str}' -> '{dt_str_fixed}' -> '{dt.strftime('%a, %d %b %Y %H:%M:%S %z')}'")
         return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
     except Exception as e:
-        print(f"Date parse error: '{dt_str}' -> '{dt_str_fixed}'. Error: {e}")
+        print(f"DEBUG: Date parse error: '{dt_str}' -> '{dt_str_fixed}'. Error: {e}")
         return None
 
 def generate_rss(dolar_info):
@@ -60,9 +67,11 @@ def generate_rss(dolar_info):
     if pubdate_rfc822:
         description_body += f" (Fecha de publicación: {pubdate_rfc822})"
         ET.SubElement(item, "pubDate").text = pubdate_rfc822
+        print(f"DEBUG: Using feed pubdate: '{pubdate_rfc822}'")
     else:
         description_body += f" ({FALLBACK_DATE_LABEL})"
         ET.SubElement(item, "pubDate").text = FALLBACK_DATE
+        print(f"DEBUG: Using fallback pubdate: '{FALLBACK_DATE}'")
 
     ET.SubElement(item, "description").text = description_body
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
