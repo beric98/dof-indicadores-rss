@@ -2,14 +2,11 @@ import requests
 from xml.etree import ElementTree as ET
 from datetime import datetime
 import urllib3
-import re
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
 OUTPUT_FILE = "dof_rss.xml"
-FALLBACK_DATE = "Tue, 01 Jan 1991 00:00:00 +0000"
-FALLBACK_DATE_LABEL = "Fecha de publicación: 01/01/1991"
 
 def fetch_dolar_item():
     resp = requests.get(DOF_URL, verify=False)
@@ -20,34 +17,24 @@ def fetch_dolar_item():
         if title.upper() == "DOLAR":
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
-            pubdate = item.findtext("pubdate", "").strip()
-            # Debug prints to check what values are being fetched from the feed
-            print("DEBUG: Found DOLAR item")
-            print(f"DEBUG: title: '{title}'")
-            print(f"DEBUG: description: '{description}'")
-            print(f"DEBUG: valuedate: '{valuedate}'")
-            print(f"DEBUG: pubdate: '{pubdate}'")
             return {
                 "title": title,
                 "description": description,
-                "valuedate": valuedate,
-                "pubdate": pubdate
+                "valuedate": valuedate
             }
-    print("DEBUG: DOLAR item not found!")
     return None
 
 def iso8601_to_rfc822(dt_str):
+    # If string is empty or too short, return None
     if not dt_str or len(dt_str) < 10:
         return None
-    dt_str = dt_str.strip()
-    # Remove colon in timezone: 2024-05-21T06:00:00-06:00 -> 2024-05-21T06:00:00-0600
-    dt_str_fixed = re.sub(r'([+-]\d{2}):(\d{2})$', r'\1\2', dt_str)
+    # Remove colon in timezone if present (for %z in strptime)
+    if len(dt_str) > 5 and dt_str[-3] == ":":
+        dt_str = dt_str[:-3] + dt_str[-2:]
     try:
-        dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S%z")
-        print(f"DEBUG: Converted '{dt_str}' -> '{dt_str_fixed}' -> '{dt.strftime('%a, %d %b %Y %H:%M:%S %z')}'")
+        dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
         return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
-    except Exception as e:
-        print(f"DEBUG: Date parse error: '{dt_str}' -> '{dt_str_fixed}'. Error: {e}")
+    except Exception:
         return None
 
 def generate_rss(dolar_info):
@@ -56,24 +43,14 @@ def generate_rss(dolar_info):
     ET.SubElement(channel, "title").text = "DOF Indicador DOLAR"
     ET.SubElement(channel, "link").text = DOF_URL
     ET.SubElement(channel, "description").text = "Indicador DOLAR del Diario Oficial de la Federación"
-    ET.SubElement(channel, "pubDate").text = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +0000')
+    ET.SubElement(channel, "pubDate").text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
 
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
-
-    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", ""))
-
-    description_body = dolar_info["description"]
-    if pubdate_rfc822:
-        description_body += f" (Fecha de publicación: {pubdate_rfc822})"
-        ET.SubElement(item, "pubDate").text = pubdate_rfc822
-        print(f"DEBUG: Using feed pubdate: '{pubdate_rfc822}'")
-    else:
-        description_body += f" ({FALLBACK_DATE_LABEL})"
-        ET.SubElement(item, "pubDate").text = FALLBACK_DATE
-        print(f"DEBUG: Using fallback pubdate: '{FALLBACK_DATE}'")
-
-    ET.SubElement(item, "description").text = description_body
+    ET.SubElement(item, "description").text = dolar_info["description"]
+    pubdate = iso8601_to_rfc822(dolar_info["valuedate"])
+    if pubdate:
+        ET.SubElement(item, "pubDate").text = pubdate
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
