@@ -1,40 +1,45 @@
+import requests
+from datetime import datetime
+from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-on:
-  schedule:
-    - cron: '10 12 * * *'  # 6:10 AM hora de México (UTC-6 = 12:10 UTC)
-  workflow_dispatch:
+def fetch_data():
+    """
+    Example: fetch data from a public API.
+    Replace this function to fetch your real indicators.
+    """
+    url = "https://jsonplaceholder.typicode.com/posts"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
 
-permissions:
-  contents: write
+def generate_rss(items, output_file="dof_rss.xml"):
+    rss = Element("rss", version="2.0")
+    channel = SubElement(rss, "channel")
+    title = SubElement(channel, "title")
+    title.text = "DOF Indicadores"
+    link = SubElement(channel, "link")
+    link.text = "https://www.dof.gob.mx/"
+    description = SubElement(channel, "description")
+    description.text = "Actualización diaria de indicadores DOF"
+    pubDate = SubElement(channel, "pubDate")
+    pubDate.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    # Add items to RSS
+    for item in items[:10]:  # Limit to first 10 for this example
+        rss_item = SubElement(channel, "item")
+        item_title = SubElement(rss_item, "title")
+        item_title.text = item.get("title", "Sin título")
+        item_link = SubElement(rss_item, "link")
+        item_link.text = f"https://www.dof.gob.mx/{item.get('id', '')}"
+        item_description = SubElement(rss_item, "description")
+        item_description.text = item.get("body", "Sin contenido")
+        item_pubDate = SubElement(rss_item, "pubDate")
+        item_pubDate.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
 
-    steps:
-      - name: Clonar repositorio
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+    # Write RSS to file
+    tree = ElementTree(rss)
+    tree.write(output_file, encoding="utf-8", xml_declaration=True)
 
-      - name: Configurar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Instalar dependencias
-        run: pip install requests
-
-      - name: Ejecutar script RSS
-        run: python rss_gen2.py
-
-      - name: Hacer commit si hay cambios
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add dof_rss.xml
-          git diff --cached --quiet || git commit -m "Actualizar RSS automático"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+if __name__ == "__main__":
+    data = fetch_data()
+    generate_rss(data)
