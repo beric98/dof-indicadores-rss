@@ -1,0 +1,33 @@
+name: Actualizar RSS diario
+
+on:
+  schedule:
+    - cron: '10 12 * * *'  # Todos los días a las 12:10 UTC = 6:10 AM hora de México
+  workflow_dispatch:  # Permite ejecutar manualmente
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Instalar dependencias
+      run: pip install requests
+
+    - name: Ejecutar script
+      run: python rss_gen.py
+
+    - name: Subir cambios al repositorio
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add dof_rss.xml
+        git commit -m "Actualización automática del RSS [skip ci]" || echo "Sin cambios"
+        git push
