@@ -2,12 +2,14 @@ import requests
 from xml.etree import ElementTree as ET
 from datetime import datetime
 import urllib3
+import re
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
 OUTPUT_FILE = "dof_rss.xml"
 FALLBACK_DATE = "Tue, 01 Jan 1991 00:00:00 +0000"
+FALLBACK_DATE_LABEL = "Fecha de publicación: 01/01/1991"
 
 def fetch_dolar_item():
     resp = requests.get(DOF_URL, verify=False)
@@ -19,6 +21,7 @@ def fetch_dolar_item():
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
             pubdate = item.findtext("pubdate", "").strip()
+            print(f"Raw pubdate: '{pubdate}'")
             return {
                 "title": title,
                 "description": description,
@@ -30,16 +33,12 @@ def fetch_dolar_item():
 def iso8601_to_rfc822(dt_str):
     if not dt_str or len(dt_str) < 10:
         return None
-    # Remove colon in timezone for %z compatibility
-    if len(dt_str) > 5 and dt_str[-3] == ":":
-        dt_str_fixed = dt_str[:-3] + dt_str[-2:]
-    else:
-        dt_str_fixed = dt_str
+    dt_str_fixed = re.sub(r'([+-]\d{2}):(\d{2})$', r'\1\2', dt_str)
     try:
         dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S%z")
         return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
     except Exception as e:
-        print(f"Date parse error: {e}")
+        print(f"Date parse error: '{dt_str}' -> '{dt_str_fixed}'. Error: {e}")
         return None
 
 def generate_rss(dolar_info):
@@ -53,20 +52,18 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
 
-    # Parse pubdate from the XML
-    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", "")) or iso8601_to_rfc822(dolar_info.get("valuedate", ""))
-    if not pubdate_rfc822:
-        pubdate_rfc822 = FALLBACK_DATE
+    # Try to parse pubdate from feed first
+    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", ""))
 
-    # Include pubdate in the description as well
     description_body = dolar_info["description"]
     if pubdate_rfc822:
         description_body += f" (Fecha de publicación: {pubdate_rfc822})"
+        ET.SubElement(item, "pubDate").text = pubdate_rfc822
+    else:
+        description_body += f" ({FALLBACK_DATE_LABEL})"
+        ET.SubElement(item, "pubDate").text = FALLBACK_DATE
+
     ET.SubElement(item, "description").text = description_body
-
-    # Set pubDate as a direct child of the item (for RSSDog and RSS readers)
-    ET.SubElement(item, "pubDate").text = pubdate_rfc822
-
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
