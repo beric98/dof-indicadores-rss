@@ -1,14 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Ejemplo RSS</title>
-    <link>https://www.dof.gob.mx/indicadores.xml</link>
-    <description>Feed de prueba</description>
-    <item>
-      <title>Ejemplo de indicador</title>
-      <description>Este es un valor de prueba</description>
-      <pubDate>Tue, 21 May 2024 00:00:00 GMT</pubDate>
-      <guid>ejemplo-21-05-2024</guid>
-    </item>
-  </channel>
-</rss>
+<?xml version='1.0' encoding='utf-8'?>
+<rss version="2.0"><channel><title>DOF Indicadores</title><link>https://www.dof.gob.mx/</link><description>Actualización diaria de indicadores DOF</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate><item><title>sunt aut facere repellat provident occaecati excepturi optio reprehenderit</title><link>https://www.dof.gob.mx/1</link><description>quia et suscipit
+suscipit recusandae consequuntur expedita et cum
+reprehenderit molestiae ut ut quas totam
+nostrum rerum est autem sunt rem eveniet architecto</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>qui est esse</title><link>https://www.dof.gob.mx/2</link><description>est rerum tempore vitae
+sequi sint nihil reprehenderit dolor beatae ea dolores neque
+fugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis
+qui aperiam non debitis possimus qui neque nisi nulla</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>ea molestias quasi exercitationem repellat qui ipsa sit aut</title><link>https://www.dof.gob.mx/3</link><description>et iusto sed quo iure
+voluptatem occaecati omnis eligendi aut ad
+voluptatem doloribus vel accusantium quis pariatur
+molestiae porro eius odio et labore et velit aut</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>eum et est occaecati</title><link>https://www.dof.gob.mx/4</link><description>ullam et saepe reiciendis voluptatem adipisci
+sit amet autem assumenda provident rerum culpa
+quis hic commodi nesciunt rem tenetur doloremque ipsam iure
+quis sunt voluptatem rerum illo velit</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>nesciunt quas odio</title><link>https://www.dof.gob.mx/5</link><description>repudiandae veniam quaerat sunt sed
+alias aut fugiat sit autem sed est
+voluptatem omnis possimus esse voluptatibus quis
+est aut tenetur dolor neque</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>dolorem eum magni eos aperiam quia</title><link>https://www.dof.gob.mx/6</link><description>ut aspernatur corporis harum nihil quis provident sequi
+mollitia nobis aliquid molestiae
+perspiciatis et ea nemo ab reprehenderit accusantium quas
+voluptate dolores velit et doloremque molestiae</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>magnam facilis autem</title><link>https://www.dof.gob.mx/7</link><description>dolore placeat quibusdam ea quo vitae
+magni quis enim qui quis quo nemo aut saepe
+quidem repellat excepturi ut quia
+sunt ut sequi eos ea sed quas</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>dolorem dolore est ipsam</title><link>https://www.dof.gob.mx/8</link><description>dignissimos aperiam dolorem qui eum
+facilis quibusdam animi sint suscipit qui sint possimus cum
+quaerat magni maiores excepturi
+ipsam ut commodi dolor voluptatum modi aut vitae</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>nesciunt iure omnis dolorem tempora et accusantium</title><link>https://www.dof.gob.mx/9</link><description>consectetur animi nesciunt iure dolore
+enim quia ad
+veniam autem ut quam aut nobis
+et est aut quod aut provident voluptas autem voluptas</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item><item><title>optio molestias id quia eum</title><link>https://www.dof.gob.mx/10</link><description>quo et expedita modi cum officia vel magni
+doloribus qui repudiandae
+vero nisi sit
+quos veniam quod sed accusamus veritatis error</description><pubDate>Wed, 21 May 2025 20:18:23 </pubDate></item></channel></rss>
