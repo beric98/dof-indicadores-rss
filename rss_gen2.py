@@ -1,4 +1,3 @@
-name: Actualizar RSS diario
 
 on:
   schedule:
