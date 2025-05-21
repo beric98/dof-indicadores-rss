@@ -1,45 +1,47 @@
 import requests
+from xml.etree import ElementTree as ET
 from datetime import datetime
-from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-def fetch_data():
-    """
-    Example: fetch data from a public API.
-    Replace this function to fetch your real indicators.
-    """
-    url = "https://jsonplaceholder.typicode.com/posts"
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
+OUTPUT_FILE = "dof_rss.xml"
 
-def generate_rss(items, output_file="dof_rss.xml"):
-    rss = Element("rss", version="2.0")
-    channel = SubElement(rss, "channel")
-    title = SubElement(channel, "title")
-    title.text = "DOF Indicadores"
-    link = SubElement(channel, "link")
-    link.text = "https://www.dof.gob.mx/"
-    description = SubElement(channel, "description")
-    description.text = "Actualización diaria de indicadores DOF"
-    pubDate = SubElement(channel, "pubDate")
-    pubDate.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+def fetch_dolar_item():
+    resp = requests.get(DOF_URL)
+    resp.raise_for_status()
+    tree = ET.fromstring(resp.content)
+    # The XML structure: <indicadores><item>...</item><item>...</item>...</indicadores>
+    for item in tree.findall(".//item"):
+        title = item.findtext("title", "").strip()
+        if title.upper() == "DOLAR":
+            description = item.findtext("description", "").strip()
+            valuedate = item.findtext("valuedate", "").strip()
+            return {
+                "title": title,
+                "description": description,
+                "valuedate": valuedate
+            }
+    return None
 
-    # Add items to RSS
-    for item in items[:10]:  # Limit to first 10 for this example
-        rss_item = SubElement(channel, "item")
-        item_title = SubElement(rss_item, "title")
-        item_title.text = item.get("title", "Sin título")
-        item_link = SubElement(rss_item, "link")
-        item_link.text = f"https://www.dof.gob.mx/{item.get('id', '')}"
-        item_description = SubElement(rss_item, "description")
-        item_description.text = item.get("body", "Sin contenido")
-        item_pubDate = SubElement(rss_item, "pubDate")
-        item_pubDate.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+def generate_rss(dolar_info):
+    rss = ET.Element("rss", version="2.0")
+    channel = ET.SubElement(rss, "channel")
+    ET.SubElement(channel, "title").text = "DOF Indicador DOLAR"
+    ET.SubElement(channel, "link").text = DOF_URL
+    ET.SubElement(channel, "description").text = "Indicador DOLAR del Diario Oficial de la Federación"
+    ET.SubElement(channel, "pubDate").text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
 
-    # Write RSS to file
-    tree = ElementTree(rss)
-    tree.write(output_file, encoding="utf-8", xml_declaration=True)
+    item = ET.SubElement(channel, "item")
+    ET.SubElement(item, "title").text = dolar_info["title"]
+    ET.SubElement(item, "description").text = dolar_info["description"]
+    ET.SubElement(item, "pubDate").text = dolar_info["valuedate"]
+    ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
+
+    tree = ET.ElementTree(rss)
+    tree.write(OUTPUT_FILE, encoding="utf-8", xml_declaration=True)
 
 if __name__ == "__main__":
-    data = fetch_data()
-    generate_rss(data)
+    dolar = fetch_dolar_item()
+    if dolar:
+        generate_rss(dolar)
+    else:
+        print("No DOLAR indicator found.")
