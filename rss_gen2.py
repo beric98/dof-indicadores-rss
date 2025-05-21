@@ -51,7 +51,7 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
 
-    # Add pubdate as parsed string inside the description
+    # Always include pubdate in the description if it exists and can be parsed
     pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", ""))
     description_body = dolar_info["description"]
     if pubdate_rfc822:
