@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Ejemplo RSS</title>
+    <link>https://www.dof.gob.mx/indicadores.xml</link>
+    <description>Feed de prueba</description>
+    <item>
+      <title>Ejemplo de indicador</title>
+      <description>Este es un valor de prueba</description>
+      <pubDate>Tue, 21 May 2024 00:00:00 GMT</pubDate>
+      <guid>ejemplo-21-05-2024</guid>
+    </item>
+  </channel>
+</rss>
