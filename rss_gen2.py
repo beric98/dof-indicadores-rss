@@ -3,7 +3,6 @@ from xml.etree import ElementTree as ET
 from datetime import datetime
 import urllib3
 
-# Suppress only the single InsecureRequestWarning from urllib3 needed.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
@@ -25,6 +24,15 @@ def fetch_dolar_item():
             }
     return None
 
+def iso8601_to_rfc822(dt_str):
+    # Example input: 2025-05-21T00:00:00-06:00
+    # Remove colon in timezone for strptime compatibility
+    if dt_str[-3] == ":":
+        dt_str = dt_str[:-3] + dt_str[-2:]
+    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
+    # Format as RFC-822
+    return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+
 def generate_rss(dolar_info):
     rss = ET.Element("rss", version="2.0")
     channel = ET.SubElement(rss, "channel")
@@ -36,7 +44,8 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
     ET.SubElement(item, "description").text = dolar_info["description"]
-    ET.SubElement(item, "pubDate").text = dolar_info["valuedate"]
+    # Convert valuedate to RFC-822 for pubDate
+    ET.SubElement(item, "pubDate").text = iso8601_to_rfc822(dolar_info["valuedate"])
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
