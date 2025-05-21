@@ -21,7 +21,7 @@ def fetch_dolar_item():
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
             pubdate = item.findtext("pubdate", "").strip()
-            print(f"Raw pubdate: '{pubdate}'")
+            print(f"Raw pubdate: '{pubdate}'")   # DEBUG
             return {
                 "title": title,
                 "description": description,
@@ -33,6 +33,8 @@ def fetch_dolar_item():
 def iso8601_to_rfc822(dt_str):
     if not dt_str or len(dt_str) < 10:
         return None
+    dt_str = dt_str.strip()
+    # Remove colon in timezone: 2024-05-21T06:00:00-06:00 -> 2024-05-21T06:00:00-0600
     dt_str_fixed = re.sub(r'([+-]\d{2}):(\d{2})$', r'\1\2', dt_str)
     try:
         dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S%z")
@@ -52,7 +54,6 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
 
-    # Try to parse pubdate from feed first
     pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", ""))
 
     description_body = dolar_info["description"]
