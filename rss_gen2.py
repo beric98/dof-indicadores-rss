@@ -25,13 +25,17 @@ def fetch_dolar_item():
     return None
 
 def iso8601_to_rfc822(dt_str):
-    # Example input: 2025-05-21T00:00:00-06:00
-    # Remove colon in timezone for strptime compatibility
-    if dt_str[-3] == ":":
+    # If string is empty or too short, return None
+    if not dt_str or len(dt_str) < 10:
+        return None
+    # Remove colon in timezone if present (for %z in strptime)
+    if len(dt_str) > 5 and dt_str[-3] == ":":
         dt_str = dt_str[:-3] + dt_str[-2:]
-    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
-    # Format as RFC-822
-    return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+    try:
+        dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
+        return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+    except Exception:
+        return None
 
 def generate_rss(dolar_info):
     rss = ET.Element("rss", version="2.0")
@@ -44,8 +48,9 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
     ET.SubElement(item, "description").text = dolar_info["description"]
-    # Convert valuedate to RFC-822 for pubDate
-    ET.SubElement(item, "pubDate").text = iso8601_to_rfc822(dolar_info["valuedate"])
+    pubdate = iso8601_to_rfc822(dolar_info["valuedate"])
+    if pubdate:
+        ET.SubElement(item, "pubDate").text = pubdate
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
