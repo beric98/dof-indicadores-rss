@@ -3,10 +3,10 @@ name: Actualizar RSS diario
 on:
   schedule:
     - cron: '10 12 * * *'  # 6:10 AM hora de México (UTC-6 = 12:10 UTC)
-  workflow_dispatch:      # Permite ejecución manual
+  workflow_dispatch:
 
 permissions:
-  contents: write    # Necesario para hacer push
+  contents: write
 
 jobs:
   build:
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -33,6 +35,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git add dof_rss.xml
           git diff --cached --quiet || git commit -m "Actualizar RSS automático"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
