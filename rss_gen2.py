@@ -17,24 +17,33 @@ def fetch_dolar_item():
         if title.upper() == "DOLAR":
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
+            pubdate = item.findtext("pubdate", "").strip()
+            print(f"DEBUG: Found DOLAR item with valuedate: '{valuedate}', pubdate: '{pubdate}'")
             return {
                 "title": title,
                 "description": description,
-                "valuedate": valuedate
+                "valuedate": valuedate,
+                "pubdate": pubdate
             }
+    print("DEBUG: No DOLAR indicator found.")
     return None
 
 def iso8601_to_rfc822(dt_str):
-    # If string is empty or too short, return None
     if not dt_str or len(dt_str) < 10:
         return None
     # Remove colon in timezone if present (for %z in strptime)
     if len(dt_str) > 5 and dt_str[-3] == ":":
-        dt_str = dt_str[:-3] + dt_str[-2:]
+        dt_str_fixed = dt_str[:-3] + dt_str[-2:]
+    else:
+        dt_str_fixed = dt_str
+    print(f"DEBUG: Parsing date string: '{dt_str_fixed}'")
     try:
-        dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
-        return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
-    except Exception:
+        dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S%z")
+        rfc822_date = dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+        print(f"DEBUG: Parsed RFC-822 date: {rfc822_date}")
+        return rfc822_date
+    except Exception as e:
+        print(f"DEBUG: Exception in date parsing: {e}")
         return None
 
 def generate_rss(dolar_info):
@@ -48,13 +57,18 @@ def generate_rss(dolar_info):
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
     ET.SubElement(item, "description").text = dolar_info["description"]
-    pubdate = iso8601_to_rfc822(dolar_info["valuedate"])
-    if pubdate:
-        ET.SubElement(item, "pubDate").text = pubdate
+
+    # Prefer pubdate (from XML) over valuedate
+    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", "")) \
+        or iso8601_to_rfc822(dolar_info.get("valuedate", ""))
+    if pubdate_rfc822:
+        ET.SubElement(item, "pubDate").text = pubdate_rfc822
+
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
     tree.write(OUTPUT_FILE, encoding="utf-8", xml_declaration=True)
+    print(f"DEBUG: RSS feed written to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     dolar = fetch_dolar_item()
