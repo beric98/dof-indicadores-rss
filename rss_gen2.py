@@ -69,6 +69,10 @@ def main():
     indicators = parse_indicators(xml_data)
     rss = build_rss(indicators)
     save_rss(rss)
-
+    
+def fetch_dof_xml():
+    response = requests.get(DOF_URL, verify=False)  # Disable SSL verification
+    response.raise_for_status()
+    return response.content
 if __name__ == "__main__":
     main()
