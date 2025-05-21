@@ -17,25 +17,19 @@ def fetch_dolar_item():
         if title.upper() == "DOLAR":
             description = item.findtext("description", "").strip()
             valuedate = item.findtext("valuedate", "").strip()
+            # Try both pubDate and pubdate, as XML tag may be case sensitive
+            pubdate = item.findtext("pubDate")
+            if pubdate is None:
+                pubdate = item.findtext("pubdate", "").strip()
+            else:
+                pubdate = pubdate.strip()
             return {
                 "title": title,
                 "description": description,
-                "valuedate": valuedate
+                "valuedate": valuedate,
+                "pubdate": pubdate
             }
     return None
-
-def iso8601_to_rfc822(dt_str):
-    # If string is empty or too short, return None
-    if not dt_str or len(dt_str) < 10:
-        return None
-    # Remove colon in timezone if present (for %z in strptime)
-    if len(dt_str) > 5 and dt_str[-3] == ":":
-        dt_str = dt_str[:-3] + dt_str[-2:]
-    try:
-        dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S%z")
-        return dt.strftime('%a, %d %b %Y %H:%M:%S %z')
-    except Exception:
-        return None
 
 def generate_rss(dolar_info):
     rss = ET.Element("rss", version="2.0")
@@ -43,14 +37,20 @@ def generate_rss(dolar_info):
     ET.SubElement(channel, "title").text = "DOF Indicador DOLAR"
     ET.SubElement(channel, "link").text = DOF_URL
     ET.SubElement(channel, "description").text = "Indicador DOLAR del Diario Oficial de la Federación"
-    ET.SubElement(channel, "pubDate").text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+    ET.SubElement(channel, "pubDate").text = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +0000')
 
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
-    ET.SubElement(item, "description").text = dolar_info["description"]
-    pubdate = iso8601_to_rfc822(dolar_info["valuedate"])
+
+    pubdate = dolar_info.get("pubdate", "")
     if pubdate:
         ET.SubElement(item, "pubDate").text = pubdate
+        description_body = f"{dolar_info['description']} (Fecha de publicación: {pubdate})"
+    else:
+        # If no pubdate, just show description without date info
+        description_body = dolar_info["description"]
+
+    ET.SubElement(item, "description").text = description_body
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
     tree = ET.ElementTree(rss)
