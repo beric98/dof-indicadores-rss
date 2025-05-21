@@ -1,15 +1,18 @@
 import requests
 from xml.etree import ElementTree as ET
 from datetime import datetime
+import urllib3
+
+# Suppress only the single InsecureRequestWarning from urllib3 needed.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
 OUTPUT_FILE = "dof_rss.xml"
 
 def fetch_dolar_item():
-    resp = requests.get(DOF_URL)
+    resp = requests.get(DOF_URL, verify=False)
     resp.raise_for_status()
     tree = ET.fromstring(resp.content)
-    # The XML structure: <indicadores><item>...</item><item>...</item>...</indicadores>
     for item in tree.findall(".//item"):
         title = item.findtext("title", "").strip()
         if title.upper() == "DOLAR":
