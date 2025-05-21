@@ -1,78 +1,38 @@
-import requests
-import xml.etree.ElementTree as ET
-from datetime import datetime
+name: Actualizar RSS diario
 
-DOF_URL = "https://www.dof.gob.mx/indicadores.xml"
-RSS_FILENAME = "dof_rss.xml"
-RSS_TITLE = "Indicadores DOF"
-RSS_LINK = DOF_URL
-RSS_DESCRIPTION = "Indicadores económicos publicados por el Diario Oficial de la Federación."
+on:
+  schedule:
+    - cron: '10 12 * * *'  # 6:10 AM hora de México (UTC-6 = 12:10 UTC)
+  workflow_dispatch:      # Permite ejecución manual
 
-def fetch_dof_xml():
-    response = requests.get(DOF_URL)
-    response.raise_for_status()
-    return response.content
+permissions:
+  contents: write    # Necesario para hacer push
 
-def parse_indicators(xml_data):
-    root = ET.fromstring(xml_data)
-    items = []
-    for indicador in root.findall(".//indicador"):
-        nombre = indicador.find("nombre").text.strip()
-        valor = indicador.find("valor").text.strip()
-        fecha = indicador.find("fecha").text.strip()
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-        # Formato para pubDate
-        try:
-            pub_date = datetime.strptime(fecha, "%d/%m/%Y")
-            pub_date_str = pub_date.strftime("%a, %d %b %Y 00:00:00 GMT")
-        except ValueError:
-            pub_date_str = fecha  # fallback si el formato no es reconocible
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
 
-        items.append({
-            "title": nombre,
-            "description": f"{nombre}: {valor}",
-            "pubDate": pub_date_str,
-            "guid": f"{nombre}-{fecha}".replace(" ", "-")
-        })
-    return items
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-def build_rss(items):
-    rss_items = ""
-    for item in items:
-        rss_items += f"""
-        <item>
-            <title>{item["title"]}</title>
-            <description>{item["description"]}</description>
-            <pubDate>{item["pubDate"]}</pubDate>
-            <guid>{item["guid"]}</guid>
-        </item>
-        """
+      - name: Instalar dependencias
+        run: pip install requests
 
-    rss_feed = f"""<?xml version="1.0" encoding="UTF-8"?>
-    <rss version="2.0">
-    <channel>
-        <title>{RSS_TITLE}</title>
-        <link>{RSS_LINK}</link>
-        <description>{RSS_DESCRIPTION}</description>
-        {rss_items}
-    </channel>
-    </rss>
-    """
-    return rss_feed
+      - name: Ejecutar script RSS
+        run: python rss_gen2.py
 
-def save_rss(content):
-    with open(RSS_FILENAME, "w", encoding="utf-8") as f:
-        f.write(content)
-
-def main():
-    xml_data = fetch_dof_xml()
-    indicators = parse_indicators(xml_data)
-    rss = build_rss(indicators)
-    save_rss(rss)
-    
-def fetch_dof_xml():
-    response = requests.get(DOF_URL, verify=False)  # Disable SSL verification
-    response.raise_for_status()
-    return response.content
-if __name__ == "__main__":
-    main()
+      - name: Hacer commit si hay cambios
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add dof_rss.xml
+          git diff --cached --quiet || git commit -m "Actualizar RSS automático"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
