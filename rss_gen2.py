@@ -50,13 +50,13 @@ def generate_rss(dolar_info):
 
     item = ET.SubElement(channel, "item")
     ET.SubElement(item, "title").text = dolar_info["title"]
+    ET.SubElement(item, "description").text = dolar_info["description"]
 
-    # Always include pubdate in the description if it exists and can be parsed
-    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", ""))
-    description_body = dolar_info["description"]
+    # Set pubDate tag in the item using pubdate if possible, else valuedate
+    pubdate_rfc822 = iso8601_to_rfc822(dolar_info.get("pubdate", "")) \
+        or iso8601_to_rfc822(dolar_info.get("valuedate", ""))
     if pubdate_rfc822:
-        description_body += f"\n\nFecha de publicación: {pubdate_rfc822}"
-    ET.SubElement(item, "description").text = description_body
+        ET.SubElement(item, "pubDate").text = pubdate_rfc822
 
     ET.SubElement(item, "guid").text = f"dof-dolar-{dolar_info['valuedate']}"
 
