@@ -2,8 +2,20 @@ name: Actualizar RSS diario
 
 on:
   schedule:
-    - cron: '15 12 * * *'  # 6:15 AM hora de México (UTC-6 = 12:15 UTC)
+    # Lunes a viernes, cada ~15 min de 06:07 a 08:52 hora de México (UTC-6), en minutos
+    # poco usados: GitHub retrasa las tareas programadas (con una sola corrida a las
+    # 06:15 llegaban entre las 06:50 y las 17:00). El ERP de Paraíso Mahahual decide a
+    # partir de las 08:00 si hoy hubo publicación del tipo de cambio en el DOF, y usa
+    # este feed cuando no logra leer el DOF directo.
+    - cron: '7,22,37,52 12-14 * * 1-5'
+    # Una más a media mañana, por si las de temprano no corrieron.
+    - cron: '41 16 * * 1-5'
   workflow_dispatch:
+
+# Dos corridas a la vez se pisarían al hacer push.
+concurrency:
+  group: rss
+  cancel-in-progress: false
 
 permissions:
   contents: write
